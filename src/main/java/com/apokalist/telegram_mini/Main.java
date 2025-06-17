@@ -18,14 +18,16 @@ public class Main extends Application {
                     LoginDialog.showError("Nickname and room cannot be empty!");
                     return;
                 }
+
                 ChatClient client = new ChatClient(nickname, roomName, null);
                 ChatUI ui = new ChatUI(client, primaryStage);
                 client.setUI(ui);
                 client.connect();
                 System.out.println("Connected to RabbitMQ, showing UI...");
                 ui.show();
+
+                ui.getRoomManager().announceRoom(roomName);
             });
-            // if (!primaryStage.isShowing()) primaryStage.close();
         } catch (Exception e) {
             e.printStackTrace();
             LoginDialog.showError("Startup error: " + e.getMessage());

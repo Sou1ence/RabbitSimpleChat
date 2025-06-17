@@ -7,55 +7,72 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.application.Platform;
 
-import java.util.Arrays;
+import java.util.Objects;
 
+/**
+ * UI for the chat app, sets up JavaFX components
+ */
 public class ChatUI {
-    private ChatClient client;
-    private final Stage stage;
-    private TextArea chatArea;
-    private TextField inputField;
-    private ListView<String> roomList;
-    private ListView<String> userList;
-    private Label accountLabel;
+    private ChatClient client; // Client for RabbitMQ
+    private final Stage stage; // Main window
+    private TextArea chatArea; // Where messages show up
+    private TextField inputField; // Input for messages
+    private ListView<String> roomList; // List of rooms
+    private ListView<String> userList; // List of users
+    private Label accountLabel; // Shows logged-in user
+    private RoomManager roomManager; // Manages room list
 
+    /**
+     * Constructor, sets up client and stage.
+     * @param client Chat client
+     * @param stage Main stage
+     */
     public ChatUI(ChatClient client, Stage stage) {
         this.client = client;
         this.stage = stage;
+        this.roomManager = new RoomManager(this);
     }
 
+    /**
+     * Shows the UI, builds all components.
+     */
     public void show() {
         System.out.println("Building UI...");
-        BorderPane root = new BorderPane();
+        BorderPane root = new BorderPane(); // Main layout
 
-        // Left: Room list
+        /// Room list on the left
         roomList = new ListView<>();
-        roomList.setId("roomList");
-        roomList.getItems().addAll(Arrays.asList("room1", "room2", "room3"));
-        roomList.getSelectionModel().select(client.getRoomName());
-        roomList.setPrefWidth(150);
+        roomList.setId("roomList"); // For CSS
+
+        // Load rooms from manager
+        roomList.getItems().addAll(roomManager.getRooms());
+        roomList.getSelectionModel().select(client.getRoomName()); // Select current room
+        roomList.setPrefWidth(150); // Width
+
+        // Connect room manager
+        roomManager.connect();
+
+        // Switch room when selected
         roomList.getSelectionModel().selectedItemProperty().addListener((obs, oldRoom, newRoom) -> {
             if (newRoom != null && !newRoom.equals(client.getRoomName())) {
-                // Properly close old client
-                client.close();
+                client.close(); // Close old client
 
-                // Wait a bit for clean shutdown
+                // Wait a bit, then switch
                 new Thread(() -> {
                     try {
-                        Thread.sleep(500); // Wait for proper shutdown
+                        Thread.sleep(500); // Give it time to shutdown
                         Platform.runLater(() -> {
-                            // Create new client for new room
-                            client = new ChatClient(client.getNickname(), newRoom, this);
+                            client = new ChatClient(client.getNickname(), newRoom, this); // New client
                             this.client = client;
-                            client.connect();
+                            client.connect(); // Connect to new room
 
-                            // Clear UI and update
+                            // Reset UI
                             chatArea.clear();
                             userList.getItems().clear();
                             accountLabel.setText("Logged in as: " + client.getNickname());
                             stage.setTitle("Chat - " + newRoom + " (" + client.getNickname() + ")");
 
-                            // Update room selection styling
-                            roomList.refresh();
+                            roomList.refresh(); // Update list
                         });
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -64,17 +81,24 @@ public class ChatUI {
             }
         });
 
+        // Context menu for adding rooms
         ContextMenu roomMenu = new ContextMenu();
         MenuItem addRoom = new MenuItem("Add Room");
         addRoom.setOnAction(e -> {
             TextInputDialog dialog = new TextInputDialog();
             dialog.setTitle("New Room");
             dialog.setHeaderText("Enter new room name");
-            dialog.showAndWait().ifPresent(roomList.getItems()::add);
+            dialog.showAndWait().ifPresent(newRoomName -> {
+                if (!newRoomName.trim().isEmpty()) {
+                    roomManager.announceRoom(newRoomName.trim());
+                    // Room added via callback
+                }
+            });
         });
         roomMenu.getItems().add(addRoom);
         roomList.setContextMenu(roomMenu);
 
+        // Custom cell for room list
         roomList.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -82,7 +106,12 @@ public class ChatUI {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item);
+                    setText("  " + item); // Add padding
+                    if (item.equals(client.getRoomName())) {
+                        setStyle("-fx-font-weight: bold;"); // Bold current room
+                    } else {
+                        setStyle("");
+                    }
                 }
             }
         });
@@ -91,27 +120,28 @@ public class ChatUI {
         leftPane.setPadding(new Insets(10));
         root.setLeft(leftPane);
 
-        // Center: Chat area
+        /// Center: Chat area
         chatArea = new TextArea();
-        chatArea.setEditable(false);
-        chatArea.setWrapText(true);
+        chatArea.setEditable(false); // Read-only
+        chatArea.setWrapText(true); // Wrap text
 
         inputField = new TextField();
         inputField.setPromptText("Enter message...");
-        inputField.setOnAction(e -> sendMessage());
+        inputField.setOnAction(e -> sendMessage()); // Send on enter
 
         Button sendButton = new Button("Send");
-        sendButton.setOnAction(e -> sendMessage());
+        sendButton.setOnAction(e -> sendMessage()); // Send on click
 
         HBox inputBox = new HBox(10, inputField, sendButton);
         inputBox.setPadding(new Insets(10));
-        HBox.setHgrow(inputField, Priority.ALWAYS);
+        HBox.setHgrow(inputField, Priority.ALWAYS); // Stretch input field
 
-        // Right: User list
+        /// Right: User list
         userList = new ListView<>();
-        userList.setId("userList");
+        userList.setId("userList"); // For CSS
         userList.setPrefWidth(150);
 
+        // Context menu for private messages
         ContextMenu userMenu = new ContextMenu();
         MenuItem sendPrivate = new MenuItem("Send Private Message");
         sendPrivate.setOnAction(e -> {
@@ -128,84 +158,101 @@ public class ChatUI {
 
         VBox chatPane = new VBox(10, chatArea, inputBox);
         chatPane.setPadding(new Insets(10));
-        VBox.setVgrow(chatArea, Priority.ALWAYS);
+        VBox.setVgrow(chatArea, Priority.ALWAYS); // Stretch chat area
 
         HBox centerPane = new HBox(10, chatPane, userList);
         centerPane.setPadding(new Insets(10));
         HBox.setHgrow(chatPane, Priority.ALWAYS);
         root.setCenter(centerPane);
 
-        // Bottom: Account info
+        /// Bottom: Account info
         accountLabel = new Label("Logged in as: " + client.getNickname());
-        accountLabel.setId("accountLabel");
+        accountLabel.setId("accountLabel"); // For CSS
 
         Button logoutButton = new Button("Change Account");
         logoutButton.setOnAction(e -> {
-            client.close();
-            stage.close();
-            new Main().start(new Stage());
+            client.close(); // Close client
+            roomManager.close(); // Close room manager
+            stage.close(); // Close window
+            new Main().start(new Stage()); // Open login
         });
 
-        HBox accountBox = newategories(10, accountLabel, logoutButton);
+        HBox accountBox = new HBox(10, accountLabel, logoutButton);
         accountBox.setPadding(new Insets(10));
         root.setBottom(accountBox);
 
+        // Set up scene
         Scene scene = new Scene(root, 700, 500);
         try {
-            scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
         } catch (Exception e) {
             System.err.println("Failed to load styles.css: " + e.getMessage());
         }
 
         stage.setScene(scene);
         stage.setTitle("Chat - " + client.getRoomName() + " (" + client.getNickname() + ")");
-        stage.setOnCloseRequest(e -> client.close());
+        stage.setOnCloseRequest(e -> {
+            client.close();
+            roomManager.close();
+        });
         System.out.println("Showing stage...");
         stage.show();
 
-        // Focus на поле ввода
+        // Focus input field
         Platform.runLater(() -> inputField.requestFocus());
     }
 
-    private HBox newategories(int i, Label accountLabel, Button logoutButton) {
-        HBox hbox = new HBox(i, accountLabel, logoutButton);
-        hbox.setPadding(new Insets(10));
-        return hbox;
+    /**
+     * Adds room to list (called from RoomManager).
+     * @param roomName Room name to add
+     */
+    public void addRoomToList(String roomName) {
+        if (!roomList.getItems().contains(roomName)) {
+            roomList.getItems().add(roomName);
+        }
     }
 
+    /**
+     * Adds message to chat area.
+     * @param message Message to display
+     */
     public void appendMessage(String message) {
         Platform.runLater(() -> {
+            /// Bold own messages
             if (message.contains(client.getNickname() + ":")) {
                 chatArea.appendText("**" + message + "**\n");
             } else {
                 chatArea.appendText(message + "\n");
             }
-            chatArea.setScrollTop(Double.MAX_VALUE);
+            chatArea.setScrollTop(Double.MAX_VALUE); // Scroll to bottom
 
-            // Обновление списка пользователей
+            // Update user list
             if (message.contains("joined the chat")) {
                 String[] parts = message.split(" ");
                 if (parts.length > 1) {
                     String user = parts[1];
                     if (!userList.getItems().contains(user) && !user.equals("System:")) {
-                        userList.getItems().add(user);
+                        userList.getItems().add(user); // Add new user
                     }
                 }
             } else if (message.contains("left the chat")) {
                 String[] parts = message.split(" ");
                 if (parts.length > 1) {
                     String user = parts[1];
-                    userList.getItems().remove(user);
+                    userList.getItems().remove(user); // Remove user
                 }
             }
 
-            // Notification если окно не в фокусе
+            // Notify if window not focused
             if (!stage.isFocused()) {
                 notifyNewMessage();
             }
         });
     }
 
+    /**
+     * Flashes title for new messages.
+     */
     private void notifyNewMessage() {
         new Thread(() -> {
             try {
@@ -222,12 +269,14 @@ public class ChatUI {
         }).start();
     }
 
+    /**
+     * Sends message or handles commands.
+     */
     private void sendMessage() {
         String message = inputField.getText().trim();
         if (!message.isEmpty()) {
-            // Проверка на команды
             if (message.startsWith("/pm ")) {
-                // Приватное сообщение: /pm username message
+                /// Private message: /pm username message
                 String[] parts = message.substring(4).split(" ", 2);
                 if (parts.length >= 2) {
                     String recipient = parts[0];
@@ -238,22 +287,21 @@ public class ChatUI {
                     chatArea.appendText("Usage: /pm <username> <message>\n");
                 }
             } else if (message.startsWith("/help")) {
-                // Показать справку
-                showHelp();
+                showHelp(); // Show help
             } else if (message.startsWith("/clear")) {
-                // Очистить чат
-                chatArea.clear();
+                chatArea.clear(); // Clear chat
             } else if (message.startsWith("/users")) {
-                // Показать список пользователей
-                chatArea.appendText("Users in room: " + String.join(", ", userList.getItems()) + "\n");
+                chatArea.appendText("Users in room: " + String.join(", ", userList.getItems()) + "\n"); // List users
             } else {
-                // Обычное сообщение
-                client.sendMessage(message);
+                client.sendMessage(message); // Normal message
             }
-            inputField.clear();
+            inputField.clear(); // Clear input
         }
     }
 
+    /**
+     * Shows help commands in chat.
+     */
     private void showHelp() {
         StringBuilder help = new StringBuilder();
         help.append("Available commands:\n");
@@ -266,7 +314,19 @@ public class ChatUI {
         chatArea.appendText(help.toString());
     }
 
+    /**
+     * Sets new client.
+     * @param client New chat client
+     */
     public void setClient(ChatClient client) {
         this.client = client;
+    }
+
+    /**
+     * Gets room manager.
+     * @return Room manager instance
+     */
+    public RoomManager getRoomManager() {
+        return roomManager;
     }
 }
