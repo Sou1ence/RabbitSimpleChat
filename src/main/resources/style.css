@@ -1,0 +1,116 @@
+/* Основной фон для всех панелей */
+.root {
+    -fx-background-color: #2c2c2a;
+}
+
+/* Стили для BorderPane и VBox в ChatUI */
+.border-pane {
+    -fx-background-color: #2c2c2a;
+    -fx-padding: 10;
+}
+
+.vbox {
+    -fx-background-color: #2c2c2a;
+    -fx-padding: 10;
+}
+
+.hbox {
+    -fx-background-color: #2c2c2a;
+    -fx-padding: 10;
+}
+
+/* Стили для списка комнат (roomList) */
+.list-view#roomList {
+    -fx-background-color: #272726;
+    -fx-control-inner-background: #272726;
+    -fx-text-fill: #a19e96;
+    -fx-pref-width: 150;
+}
+
+.list-cell:filled:selected#roomList,
+.list-cell:filled:hover#roomList {
+    -fx-background-color: #3f3f3c;
+    -fx-text-fill: #ca7b5d;
+}
+
+/* Стили для списка пользователей (userList) */
+.list-view#userList {
+    -fx-background-color: #272726;
+    -fx-control-inner-background: #272726;
+    -fx-text-fill: #a19e96;
+    -fx-pref-width: 150;
+}
+
+/* Стили для области чата (chatArea) */
+.text-area {
+    -fx-control-inner-background: #3f3f3c;
+    -fx-text-fill: #dfdfdc;
+    -fx-font-size: 14px;
+}
+
+.text-area .content {
+    -fx-background-color: #3f3f3c;
+}
+
+/* Стили для поля ввода (inputField) */
+.text-field {
+    -fx-background-color: #3f3f3c;
+    -fx-text-fill: #dfdfdc;
+    -fx-prompt-text-fill: #a19e96;
+}
+
+/* Стили для кнопок */
+.button {
+    -fx-background-color: #ca7b5d;
+    -fx-text-fill: #dfdfdc;
+    -fx-font-weight: bold;
+}
+
+.button:hover {
+    -fx-background-color: #e89b7d;
+}
+
+/* Стили для метки аккаунта */
+.label#accountLabel {
+    -fx-text-fill: #7f72c3;
+    -fx-font-size: 12px;
+}
+
+/* Стили для GridPane в LoginDialog */
+.grid-pane {
+    -fx-background-color: #2c2c2a;
+    -fx-padding: 20;
+    -fx-hgap: 10;
+    -fx-vgap: 10;
+}
+
+/* Стили для меток в LoginDialog */
+.label {
+    -fx-text-fill: #dfdfdc;
+    -fx-font-size: 14px;
+}
+
+/* Стили для диалогового окна */
+.dialog-pane {
+    -fx-background-color: #2c2c2a;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #272726;
+    -fx-text-fill: #dfdfdc;
+    -fx-font-size: 16px;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: #dfdfdc;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-background-color: #ca7b5d;
+    -fx-text-fill: #dfdfdc;
+    -fx-font-weight: bold;
+}
+
+.dialog-pane .button-bar .button:hover {
+    -fx-background-color: #e89b7d;
+}
