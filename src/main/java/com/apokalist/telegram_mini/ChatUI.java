@@ -1,3 +1,7 @@
+/**
+ * @author Kostiantyn Feniuk
+ */
+
 package com.apokalist.telegram_mini;
 
 import javafx.geometry.Insets;
@@ -286,8 +290,6 @@ public class ChatUI {
                 } else {
                     chatArea.appendText("Usage: /pm <username> <message>\n");
                 }
-            } else if (message.startsWith("/help")) {
-                showHelp(); // Show help
             } else if (message.startsWith("/clear")) {
                 chatArea.clear(); // Clear chat
             } else if (message.startsWith("/users")) {
@@ -299,20 +301,6 @@ public class ChatUI {
         }
     }
 
-    /**
-     * Shows help commands in chat.
-     */
-    private void showHelp() {
-        StringBuilder help = new StringBuilder();
-        help.append("Available commands:\n");
-        help.append("/pm <username> <message> - Send private message\n");
-        help.append("/clear - Clear chat area\n");
-        help.append("/users - Show users in current room\n");
-        help.append("/help - Show this help\n");
-        help.append("Right-click on room list to add new room\n");
-        help.append("Right-click on user list to send private message\n");
-        chatArea.appendText(help.toString());
-    }
 
     /**
      * Sets new client.

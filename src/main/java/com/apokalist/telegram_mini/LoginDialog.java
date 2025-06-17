@@ -1,3 +1,8 @@
+/**
+ * @author Kostiantyn Feniuk
+ */
+
+
 package com.apokalist.telegram_mini;
 
 import javafx.scene.control.*;
@@ -73,7 +78,7 @@ public class LoginDialog {
         alert.setHeaderText(null);
         alert.setContentText(message);
         try {
-            alert.getDialogPane().getStylesheets().add(LoginDialog.class.getResource("/com/apokalist/telegram_mini/styles.css").toExternalForm());
+            alert.getDialogPane().getStylesheets().add(Objects.requireNonNull(LoginDialog.class.getResource("/style.css")).toExternalForm());
         } catch (Exception e) {
             System.err.println("Failed to load styles.css: " + e.getMessage());
         }

@@ -1,3 +1,7 @@
+/**
+ * @author Kostiantyn Feniuk
+ */
+
 package com.apokalist.telegram_mini;
 
 import com.rabbitmq.client.*;
@@ -9,11 +13,13 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Manages room list using RabbitMQ.
+ * Manages room list using RabbitMQ
+ *
+ * pub-sub model for real-time updates
  */
 public class RoomManager {
     private static final String ROOM_LIST_EXCHANGE = "room_list_exchange";
-    private static final String ROOM_LIST_QUEUE = "room_list_updates";
+//    private static final String ROOM_LIST_QUEUE = "room_list_updates";
 
     private Connection connection; // RabbitMQ connection
     private Channel channel; // RabbitMQ channel
@@ -45,6 +51,7 @@ public class RoomManager {
             channel = connection.createChannel();
 
             // Set up exchange for room updates
+            //
             channel.exchangeDeclare(ROOM_LIST_EXCHANGE, "fanout", true);
 
             // Create temp queue for updates
@@ -106,15 +113,15 @@ public class RoomManager {
      */
     public void close() {
         try {
-            if (consumerTag != null && channel != null && channel.isOpen()) {
+            if (consumerTag != null && channel != null && channel.isOpen())
                 channel.basicCancel(consumerTag);
-            }
-            if (channel != null && channel.isOpen()) {
+
+            if (channel != null && channel.isOpen())
                 channel.close();
-            }
-            if (connection != null && connection.isOpen()) {
+
+            if (connection != null && connection.isOpen())
                 connection.close();
-            }
+
         } catch (IOException | TimeoutException e) {
             e.printStackTrace();
         }

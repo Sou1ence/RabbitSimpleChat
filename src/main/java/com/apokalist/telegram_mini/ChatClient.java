@@ -1,3 +1,14 @@
+/**
+ * @author Feniuk Kostiantyn
+ *
+ *
+ *
+ * слушатели
+ * ( channel.basicConsume(queueName, false, roomCallback, tag -> {});
+channel.basicConsume(privateQueueName, true, privateCallback, tag -> {});
+ )
+ */
+
 package com.apokalist.telegram_mini;
 
 import com.rabbitmq.client.*;
@@ -27,7 +38,7 @@ public class ChatClient {
     /**
      * Constructor, sets up client.
      * @param nickname User nickname
-     * @param roomName Room name
+     * @param roomName Room name  (ROUTING KEY)
      * @param ui ChatUI instance
      */
     public ChatClient(String nickname, String roomName, ChatUI ui) {
@@ -62,6 +73,16 @@ public class ChatClient {
             // Create DURABLE queue for EACH USER in EACH ROOM
             // Ensures every user gets ALL messages
             queueName = "user_" + nickname + "_room_" + roomName;
+
+
+//            NOTE_(DO_not_forget)_____________________________________________________________
+            // Создание очереди:
+            // durable = true — очередь сохраняется при перезапуске сервера
+            // exclusive = false — доступна другим каналам
+            // autoDelete = false — не удаляется после отключения клиента
+//            _______________________________________________________________
+
+//_________ CHANNEL.QUEUEDECLARE(STRING QUEUE, BOOLEAN DURABLE, BOOLEAN EXCLUSIVE, BOOLEAN AUTODELETE, MAP<STRING, OBJECT> ARGUMENTS)__________________|
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, exchangeName, roomName);
 
@@ -148,13 +169,10 @@ public class ChatClient {
         try {
             // Send with persistent delivery mode
             AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
-                    .deliveryMode(2) // persistent
+                    .deliveryMode(2) // persistent (2)  transient (1)
                     .build();
 
             channel.basicPublish("chat_exchange_v2", roomName, props, fullMessage.getBytes(StandardCharsets.UTF_8));
-
-            // Don't add to messageHistory here - added via consumer
-
         } catch (IOException e) {
             Platform.runLater(() -> LoginDialog.showError("Failed to send message: " + e.getMessage()));
             e.printStackTrace();
@@ -163,12 +181,15 @@ public class ChatClient {
 
     /**
      * Sends a private message to a user.
+     *
      * @param recipient Recipient's nickname
      * @param message Message to send
      */
     public void sendPrivateMessage(String recipient, String message) {
         String fullMessage = "[" + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "] [Private from " + nickname + "] " + message;
         try {
+
+            // reference to queue for private messages
             String privateQueueName = "private_" + recipient;
             AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
                     .deliveryMode(2)
@@ -186,6 +207,7 @@ public class ChatClient {
      */
     private void sendSystemMessage(String message) {
         try {
+            //Exchange "chat_exchange_v2" is used for all messages
             String fullMessage = "[" + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "] System: " + message;
             AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
                     .deliveryMode(2)
