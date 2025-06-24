@@ -13,7 +13,7 @@ public class Main extends Application {
             loginDialog.showAndWait().ifPresent(result -> {
                 String nickname = result.getKey();
                 String roomName = result.getValue();
-                System.out.println("Nickname: " + nickname + ", Room: " + roomName)ear
+                System.out.println("Nickname: " + nickname + ", Room: " + roomName);
                 if (nickname.isEmpty() || roomName.isEmpty()) {
                     LoginDialog.showError("Nickname and room cannot be empty!");
                     return;
