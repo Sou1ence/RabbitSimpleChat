@@ -166,9 +166,6 @@ Licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
   - Verify queue creation in RabbitMQ.
   - Check network connectivity and console logs.
 
-### Support
-For issues, check the [Issues](https://github.com/yourusername/telegram-mini/issues) page or submit a new issue with system details and error logs.
-
 ---
 
-*Developed using JavaFX and RabbitMQ.*
+*Developed by Era*
