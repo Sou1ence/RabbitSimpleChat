@@ -60,7 +60,7 @@ The interface adopts a modern minimalist approach, featuring:
 ### Application Setup
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/yourusername/telegram-mini.git
+   git clone https://github.com/Sou1ence/RabbitSimpleChat.git
    cd telegram-mini
    ```
 2. **Compile the Application**:
