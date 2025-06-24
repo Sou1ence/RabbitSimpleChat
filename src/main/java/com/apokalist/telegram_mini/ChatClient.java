@@ -194,7 +194,7 @@ public class ChatClient {
             AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
                     .deliveryMode(2)
                     .build();
-            channel.basicPublish("", privateQueueName, props, fullMessage.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish("", privateQueueName,true, props, fullMessage.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             Platform.runLater(() -> LoginDialog.showError("Failed to send private message: " + e.getMessage()));
             e.printStackTrace();
