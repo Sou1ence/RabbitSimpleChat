@@ -36,3 +36,22 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+
+# IntelliJ IDEA
+.idea/
+out/
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+*.log
+
+# OS shit
+Thumbs.db
+
+# Other IDEs
+*.classpath
+*.project
+*.settings/
